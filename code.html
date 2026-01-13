@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>BLACKLOG: Command Center</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <!-- React & Router Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Tailwind Config -->
+    <script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#10b77f", 
+                "secondary": "#3b82f6", 
+                "accent": "#f59e0b",
+                "danger": "#ef4444",
+                "background-light": "#f6f8f7",
+                "background-dark": "#050505",
+                "panel-dark": "#0c0c0c",
+                "border-dark": "#1f1f1f",
+                "surface": "#0a100e",
+                "surface-highlight": "#141a18",
+                "border": "#283933",
+                "slate-panel": "#1c2723",
+                "sidebar-bg": "#0c1a15",
+              },
+              fontFamily: {
+                "display": ["Inter", "sans-serif"],
+                "mono": ["JetBrains Mono", "monospace"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+    
+    <!-- Global Styles -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+        .grid-cell { width: 10px; height: 10px; border-radius: 2px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 10px; }
+        
+        .bg-grid-pattern {
+            background-image: radial-gradient(#1f1f1f 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.filled {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Range Slider Styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            background: #283933;
+            height: 0.25rem;
+            border-radius: 0.5rem;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -6px;
+            background-color: #fff;
+            height: 1rem;
+            width: 1rem;
+            border-radius: 50%;
+            transition: transform 0.1s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        .body-slider::-webkit-slider-thumb { background-color: #ef4444 !important; }
+        .mind-slider::-webkit-slider-thumb { background-color: #3b82f6 !important; }
+        .fin-slider::-webkit-slider-thumb { background-color: #10b77f !important; }
+        .skill-slider::-webkit-slider-thumb { background-color: #a855f7 !important; }
+
+        /* General Scrollbar for dark theme context */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a100e; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #283933; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #344b43; 
+        }
+        
+        /* Leaderboard Specifics */
+        .xp-font { font-family: 'JetBrains Mono', monospace; }
+        .highlight-row {
+            outline: 1px solid #10b77f;
+            background: rgba(16, 183, 127, 0.05);
+        }
+
+        /* Toggle Checkbox */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #10b77f;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #10b77f;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display selection:bg-primary selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { createRoot } = ReactDOM;
+        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation } = ReactRouterDOM;
+
+        // --- Shared Components ---
+
+        const Navigation = ({ active }) => {
+            const getLinkClass = (name) => {
+                const baseClass = "flex items-center gap-2 px-4 py-1.5 rounded-full transition-all group";
+                if (active === name) {
+                    return `${baseClass} bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20`;
+                }
+                return `${baseClass} text-slate-400 hover:text-white hover:bg-white/5`;
+            };
+
+            const getIconClass = (name) => {
+                const base = "material-symbols-outlined text-[18px] transition-transform group-hover:scale-110";
+                if (active === name) return `${base} fill-1`;
+                return base;
+            }
+
+            return (
+                <div className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+                    <Link to="/" className={getLinkClass('dashboard')}>
+                        <span className={getIconClass('dashboard')}>dashboard</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Dashboard</span>
+                    </Link>
+                    <Link to="/log" className={getLinkClass('log')}>
+                        <span className={getIconClass('log')}>edit_note</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Log Day</span>
+                    </Link>
+                    <Link to="/leaderboard" className={getLinkClass('leaderboard')}>
+                        <span className={getIconClass('leaderboard')}>leaderboard</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Leaderboard</span>
+                    </Link>
+                    <Link to="/settings" className={getLinkClass('settings')}>
+                        <span className={getIconClass('settings')}>settings</span>
+                        <span className="text-xs font-bold uppercase tracking-wide">Settings</span>
+                    </Link>
+                </div>
+            );
+        };
+
+        const MainHeader = ({ title = "BLACKLOG", activePage }) => {
+            return (
+                <nav className="fixed top-0 left-0 w-full z-50 bg-[#0a0a0a] border-b border-[#1a1a1a] h-16 flex items-center justify-between px-6 lg:px-8 backdrop-blur-sm bg-opacity-95">
+                    <div className="flex items-center gap-2 text-white shrink-0">
+                        <span className="material-symbols-outlined text-primary fill-1">verified_user</span>
+                        <h1 className="font-black text-xl tracking-widest">{title}</h1>
+                    </div>
+                    
+                    <Navigation active={activePage} />
+
+                    <div className="flex items-center gap-4 shrink-0">
+                        <div className="flex flex-col text-right hidden sm:block">
+                            <h1 className="text-xs font-bold tracking-tight mono-text text-white">OPERATOR_01</h1>
+                            <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Lvl 42 // Vanguard</p>
+                        </div>
+                        <div className="relative cursor-pointer group">
+                            <div className="size-9 rounded-full bg-center bg-cover border border-primary/50 grayscale group-hover:grayscale-0 transition-all" style={{backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuA9BPSMWA9CvOdsOIXkqP8mUgPXfCnuCN4kpAJ7xmaGuWatFkKmvzuJ4VU5T1WOxBj2mUxrVo0nMHU22YVRhBmRylZmVW5O3mSdLwDWlXfBGk4m89dXTbKeyFsOf-SXIHwBe8wHNi6wR-GDWb2GGKosnIn4pSzn9jvKsn8e_aNWytQbaTEX7Kyg1JygHl6Rn6jNigl8CaFxAJWPwBEGLjf6waGuua8JODIpDQDk1Bxq27yNoZcvdU34w0BNRXWxUyjPTIiAjcV7cA")'}}></div>
+                            <div className="absolute -bottom-0.5 -right-0.5 size-2.5 bg-primary rounded-full border-2 border-[#0a0a0a]"></div>
+                        </div>
+                    </div>
+                </nav>
+            );
+        }
+
+        // --- Screen 1: Dashboard ---
+        const DashboardScreen = () => {
+            return (
+                <div className="min-h-screen bg-background-dark text-slate-100">
+                    <MainHeader activePage="dashboard" />
+                    <main className="w-full pt-20 pb-12 relative">
+                        <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none fixed h-full w-full z-0"></div>
+                        <div className="px-6 lg:px-8 relative z-10 max-w-7xl mx-auto">
+                            <header className="flex flex-wrap justify-between items-end mb-10 border-b border-border-dark pb-6 gap-4">
+                                <div className="flex-1">
+                                    <p className="text-primary text-[10px] mono-text uppercase tracking-[0.3em] mb-2 flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+                                        System Online
+                                    </p>
+                                    <div className="flex items-center gap-6">
+                                        <h2 className="text-3xl font-black tracking-tighter uppercase text-white">Command Center</h2>
+                                        <Link to="/log" className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-background-dark text-[10px] font-bold uppercase tracking-wider transition-transform active:scale-95 hover:bg-slate-200">
+                                            <span className="material-symbols-outlined text-sm">add</span>
+                                            <span>New Log</span>
+                                        </Link>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-slate-500 text-[10px] mono-text uppercase tracking-widest">Local Operations Time</p>
+                                    <p className="text-lg mono-text font-bold text-white">14:24:58 <span className="text-slate-600 text-sm">UTC+2</span></p>
+                                </div>
+                            </header>
+                            
+                            {/* Stats Grid */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                <div className="bg-panel-dark border border-border-dark p-5 rounded-lg flex flex-col justify-between group hover:border-border-dark/80 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Current Streak</p>
+                                        <span className="material-symbols-outlined text-orange-500 text-lg group-hover:scale-110 transition-transform">local_fire_department</span>
+                                    </div>
+                                    <div className="mt-4">
+                                        <p className="text-3xl font-bold mono-text tracking-tight text-white">42<span className="text-base text-slate-500 ml-1">DAYS</span></p>
+                                        <div className="w-full bg-gray-800 h-1 mt-3 rounded-full overflow-hidden">
+                                            <div className="bg-orange-500 h-full w-[42%]"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-panel-dark border border-border-dark p-5 rounded-lg flex flex-col justify-between group hover:border-border-dark/80 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total XP</p>
+                                        <span className="material-symbols-outlined text-primary text-lg group-hover:scale-110 transition-transform">token</span>
+                                    </div>
+                                    <div className="mt-4">
+                                        <p className="text-3xl font-bold mono-text tracking-tight text-white">12,450</p>
+                                        <p className="text-primary text-[10px] font-bold mt-2 font-mono">&gt; NEXT LVL: 550 XP</p>
+                                    </div>
+                                </div>
+                                <div className="bg-panel-dark border border-border-dark p-5 rounded-lg flex flex-col justify-between border-l-4 border-l-primary/80 group hover:border-t hover:border-r hover:border-b hover:border-border-dark/80 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Rank</p>
+                                        <span className="material-symbols-outlined text-slate-400 text-lg group-hover:scale-110 transition-transform">military_tech</span>
+                                    </div>
+                                    <div className="mt-4">
+                                        <p className="text-2xl font-black tracking-tight uppercase text-white">Vanguard</p>
+                                        <p className="text-slate-500 text-[10px] font-bold mt-1">Top 2% of Operators</p>
+                                    </div>
+                                </div>
+                                <div className="bg-panel-dark border border-border-dark p-5 rounded-lg flex flex-col justify-between group hover:border-border-dark/80 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <p className="text-slate-400 text-xs font-bold uppercase tracking-wider">Consistency</p>
+                                        <span className="material-symbols-outlined text-blue-500 text-lg group-hover:scale-110 transition-transform">bolt</span>
+                                    </div>
+                                    <div className="mt-4">
+                                        <p className="text-3xl font-bold mono-text tracking-tight text-white">98.2%</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <span className="text-primary text-[10px] font-bold flex items-center">
+                                                <span className="material-symbols-outlined text-[10px]">arrow_upward</span> 0.4%
+                                            </span>
+                                            <span className="text-slate-600 text-[10px]">vs last week</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Pillars */}
+                            <section className="mb-8">
+                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2">
+                                    <span className="w-1 h-3 bg-white block"></span>
+                                    Pillar Performance Analysis
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    {/* Body */}
+                                    <div className="bg-panel-dark border border-border-dark p-6 rounded-lg flex flex-col items-center justify-center relative">
+                                        <div className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider text-slate-400">Body</div>
+                                        <div className="absolute top-4 right-4 text-emerald-500"><span className="material-symbols-outlined">fitness_center</span></div>
+                                        <div className="relative size-32 mt-4">
+                                            <svg className="size-full -rotate-90" viewBox="0 0 36 36"><path className="text-gray-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5"></path><path className="text-emerald-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="85, 100" strokeLinecap="round" strokeWidth="2.5"></path></svg>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center"><span className="text-2xl font-bold mono-text text-white">85%</span></div>
+                                        </div>
+                                        <div className="mt-4 w-full flex justify-between text-[10px] mono-text text-slate-500 uppercase"><span>Lvl 12</span><span className="text-emerald-500">Optimized</span></div>
+                                    </div>
+                                    {/* Mind */}
+                                    <div className="bg-panel-dark border border-border-dark p-6 rounded-lg flex flex-col items-center justify-center relative">
+                                        <div className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider text-slate-400">Mind</div>
+                                        <div className="absolute top-4 right-4 text-blue-500"><span className="material-symbols-outlined">psychology</span></div>
+                                        <div className="relative size-32 mt-4">
+                                            <svg className="size-full -rotate-90" viewBox="0 0 36 36"><path className="text-gray-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5"></path><path className="text-blue-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="92, 100" strokeLinecap="round" strokeWidth="2.5"></path></svg>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center"><span className="text-2xl font-bold mono-text text-white">92%</span></div>
+                                        </div>
+                                        <div className="mt-4 w-full flex justify-between text-[10px] mono-text text-slate-500 uppercase"><span>Lvl 15</span><span className="text-blue-500">Peak State</span></div>
+                                    </div>
+                                     {/* Financial */}
+                                     <div className="bg-panel-dark border border-border-dark p-6 rounded-lg flex flex-col items-center justify-center relative">
+                                        <div className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider text-slate-400">Financial</div>
+                                        <div className="absolute top-4 right-4 text-amber-500"><span className="material-symbols-outlined">payments</span></div>
+                                        <div className="relative size-32 mt-4">
+                                            <svg className="size-full -rotate-90" viewBox="0 0 36 36"><path className="text-gray-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5"></path><path className="text-amber-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="74, 100" strokeLinecap="round" strokeWidth="2.5"></path></svg>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center"><span className="text-2xl font-bold mono-text text-white">74%</span></div>
+                                        </div>
+                                        <div className="mt-4 w-full flex justify-between text-[10px] mono-text text-slate-500 uppercase"><span>Lvl 09</span><span className="text-amber-500">Scaling</span></div>
+                                    </div>
+                                     {/* Skill */}
+                                     <div className="bg-panel-dark border border-border-dark p-6 rounded-lg flex flex-col items-center justify-center relative">
+                                        <div className="absolute top-4 left-4 text-xs font-bold uppercase tracking-wider text-slate-400">Skill</div>
+                                        <div className="absolute top-4 right-4 text-purple-500"><span className="material-symbols-outlined">school</span></div>
+                                        <div className="relative size-32 mt-4">
+                                            <svg className="size-full -rotate-90" viewBox="0 0 36 36"><path className="text-gray-800" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="2.5"></path><path className="text-purple-500" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray="88, 100" strokeLinecap="round" strokeWidth="2.5"></path></svg>
+                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center"><span className="text-2xl font-bold mono-text text-white">88%</span></div>
+                                        </div>
+                                        <div className="mt-4 w-full flex justify-between text-[10px] mono-text text-slate-500 uppercase"><span>Lvl 14</span><span className="text-purple-500">Mastery</span></div>
+                                    </div>
+                                </div>
+                            </section>
+
+                             {/* Recent Logs (Simplified for component) */}
+                             <section>
+                                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500 mb-4 flex items-center gap-2">
+                                    <span className="w-1 h-3 bg-white block"></span>
+                                    Recent War Logs // AAR
+                                </h3>
+                                <div className="flex flex-col gap-3">
+                                    <div className="bg-panel-dark border border-border-dark p-4 rounded-lg flex items-center justify-between group hover:border-primary/40 transition-all cursor-pointer">
+                                        <div className="flex items-center gap-4">
+                                            <div className="size-10 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+                                                <span className="material-symbols-outlined">fitness_center</span>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-bold tracking-tight text-white group-hover:text-emerald-400 transition-colors">O_01 // HIGH_INTENSITY_STRENGTH</p>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <span className="text-[10px] mono-text text-slate-500">14:00 // OCT_24_2023</span>
+                                                    <span className="px-2 py-[2px] rounded-sm bg-emerald-500/10 text-[9px] mono-text text-emerald-500 uppercase border border-emerald-500/20">Body</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-emerald-500 mono-text font-bold">+250 XP</p>
+                                            <p className="text-[10px] mono-text text-slate-500 uppercase">Verified</p>
+                                        </div>
+                                    </div>
+                                    {/* More logs could go here */}
+                                </div>
+                                <button className="w-full mt-4 py-4 border border-dashed border-border-dark hover:border-primary/50 text-slate-500 hover:text-white hover:bg-white/5 transition-all rounded-lg text-xs font-bold uppercase tracking-widest mono-text flex items-center justify-center gap-2">
+                                    <span>View Full Mission History</span>
+                                    <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                                </button>
+                            </section>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        // --- Screen 2: Log Day ---
+        const LogDayScreen = () => {
+            const [bodyVal, setBodyVal] = useState(8);
+            const [mindVal, setMindVal] = useState(9);
+            const [finVal, setFinVal] = useState(7);
+            const [skillVal, setSkillVal] = useState(10);
+            
+            const navigate = useNavigate();
+
+            return (
+                <div className="bg-background-dark font-display text-white h-screen flex flex-col overflow-hidden">
+                    <MainHeader activePage="log" />
+
+                    <main className="flex-1 overflow-y-auto p-8 lg:p-12 pb-32 scroll-smooth relative bg-background-dark mt-16">
+                        <div className="max-w-[800px] mx-auto">
+                            <div className="flex flex-wrap justify-between items-end gap-3 mb-10 border-l-4 border-primary pl-6">
+                                <div className="flex flex-col gap-1">
+                                    <p className="text-primary text-xs font-bold tracking-[0.2em] uppercase">Tactical Entry</p>
+                                    <h1 className="text-white text-5xl font-black leading-tight tracking-tighter uppercase">Daily War Log</h1>
+                                    <p className="text-[#9db9b0] text-sm font-mono mt-1">MISSION_DATE: 2024.05.12 <span className="text-border px-2">|</span> OPERATIONAL_DAY: 842</p>
+                                </div>
+                                <button className="flex items-center gap-2 rounded-lg h-10 px-4 bg-surface border border-border text-[#9db9b0] text-sm font-bold hover:text-white hover:border-primary/50 transition-colors">
+                                    <span className="material-symbols-outlined text-sm">history</span>
+                                    <span>Archive</span>
+                                </button>
+                            </div>
+                            
+                            <div className="space-y-6">
+                                {/* Body Section */}
+                                <section className="bg-surface border border-border rounded-xl overflow-hidden shadow-2xl">
+                                    <div className="flex items-center gap-4 bg-red-500/5 px-6 py-4 border-b border-border">
+                                        <div className="text-red-500 flex items-center justify-center rounded-lg bg-red-500/10 size-10"><span className="material-symbols-outlined">bolt</span></div>
+                                        <h2 className="text-white text-lg font-bold tracking-tight">01. BODY</h2>
+                                    </div>
+                                    <div className="p-6 space-y-8">
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[#9db9b0] text-sm font-medium uppercase tracking-wider">Energy Output</label>
+                                                <span className="text-red-500 font-mono font-bold text-xl">{bodyVal}/10</span>
+                                            </div>
+                                            <input className="w-full body-slider" max="10" min="1" type="range" value={bodyVal} onChange={(e) => setBodyVal(e.target.value)} />
+                                            <div className="flex justify-between text-[10px] text-[#4a5e57] font-mono"><span>Lethargic</span><span>Peak State</span></div>
+                                        </div>
+                                        <label className="flex items-center justify-between p-4 rounded-lg bg-surface-highlight border border-border cursor-pointer hover:border-red-500/50 transition-all group">
+                                            <div className="flex items-center gap-3"><span className="material-symbols-outlined text-red-500">skull</span><span className="text-white font-medium">Zero Poison Protocol</span></div>
+                                            <input defaultChecked className="rounded border-border bg-background-dark text-red-500 focus:ring-red-500/20 size-6" type="checkbox"/>
+                                        </label>
+                                    </div>
+                                </section>
+
+                                {/* Mind Section */}
+                                <section className="bg-surface border border-border rounded-xl overflow-hidden shadow-2xl">
+                                    <div className="flex items-center gap-4 bg-blue-500/5 px-6 py-4 border-b border-border">
+                                        <div className="text-blue-500 flex items-center justify-center rounded-lg bg-blue-500/10 size-10"><span className="material-symbols-outlined">psychology</span></div>
+                                        <h2 className="text-white text-lg font-bold tracking-tight">02. MIND</h2>
+                                    </div>
+                                    <div className="p-6 space-y-8">
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[#9db9b0] text-sm font-medium uppercase tracking-wider">Focus Depth</label>
+                                                <span className="text-blue-500 font-mono font-bold text-xl">{mindVal}/10</span>
+                                            </div>
+                                            <input className="w-full mind-slider" max="10" min="1" type="range" value={mindVal} onChange={(e) => setMindVal(e.target.value)} />
+                                            <div className="flex justify-between text-[10px] text-[#4a5e57] font-mono"><span>Distracted</span><span>Flow State</span></div>
+                                        </div>
+                                        <label className="flex items-center justify-between p-4 rounded-lg bg-surface-highlight border border-border cursor-pointer hover:border-blue-500/50 transition-all">
+                                            <div className="flex items-center gap-3"><span className="material-symbols-outlined text-blue-500">menu_book</span><span className="text-white font-medium">Daily Intel Synthesis (Learning)</span></div>
+                                            <input defaultChecked className="rounded border-border bg-background-dark text-blue-500 focus:ring-blue-500/20 size-6" type="checkbox"/>
+                                        </label>
+                                    </div>
+                                </section>
+
+                                {/* Financial Section */}
+                                <section className="bg-surface border border-border rounded-xl overflow-hidden shadow-2xl">
+                                    <div className="flex items-center gap-4 bg-primary/5 px-6 py-4 border-b border-border">
+                                        <div className="text-primary flex items-center justify-center rounded-lg bg-primary/10 size-10"><span className="material-symbols-outlined">payments</span></div>
+                                        <h2 className="text-white text-lg font-bold tracking-tight">03. FINANCIAL</h2>
+                                    </div>
+                                    <div className="p-6 space-y-8">
+                                        <div className="space-y-3">
+                                            <label className="text-[#9db9b0] text-sm font-medium uppercase tracking-wider">Revenue Captured Today</label>
+                                            <div className="relative">
+                                                <span className="absolute left-6 top-1/2 -translate-y-1/2 text-primary font-black text-3xl">$</span>
+                                                <input className="w-full bg-background-dark border-2 border-primary/30 focus:border-primary rounded-xl py-6 pl-14 pr-6 text-4xl font-black text-white placeholder:text-primary/20 transition-all outline-none" placeholder="0.00" type="number"/>
+                                            </div>
+                                        </div>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[#9db9b0] text-sm font-medium uppercase tracking-wider">Execution Speed</label>
+                                                <span className="text-primary font-mono font-bold text-xl">{finVal}/10</span>
+                                            </div>
+                                            <input className="w-full fin-slider" max="10" min="1" type="range" value={finVal} onChange={(e) => setFinVal(e.target.value)} />
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* Skill Section */}
+                                <section className="bg-surface border border-border rounded-xl overflow-hidden shadow-2xl">
+                                    <div className="flex items-center gap-4 bg-purple-500/5 px-6 py-4 border-b border-border">
+                                        <div className="text-purple-500 flex items-center justify-center rounded-lg bg-purple-500/10 size-10"><span className="material-symbols-outlined">fitness_center</span></div>
+                                        <h2 className="text-white text-lg font-bold tracking-tight">04. SKILL</h2>
+                                    </div>
+                                    <div className="p-6 space-y-8">
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <label className="text-[#9db9b0] text-sm font-medium uppercase tracking-wider">Practice Difficulty</label>
+                                                <span className="text-purple-500 font-mono font-bold text-xl">Extreme</span>
+                                            </div>
+                                            <input className="w-full skill-slider" max="10" min="1" type="range" value={skillVal} onChange={(e) => setSkillVal(e.target.value)}/>
+                                        </div>
+                                        <label className="flex items-center justify-between p-4 rounded-lg bg-surface-highlight border border-border cursor-pointer hover:border-purple-500/50 transition-all">
+                                            <div className="flex items-center gap-3"><span className="material-symbols-outlined text-purple-500">model_training</span><span className="text-white font-medium">Applied Deliberate Practice</span></div>
+                                            <input defaultChecked className="rounded border-border bg-background-dark text-purple-500 focus:ring-purple-500/20 size-6" type="checkbox"/>
+                                        </label>
+                                    </div>
+                                </section>
+
+                                {/* Buttons */}
+                                <section className="bg-surface border border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-3 hover:border-primary/50 transition-colors cursor-pointer group">
+                                    <span className="material-symbols-outlined text-4xl text-border group-hover:text-primary transition-colors">add_a_photo</span>
+                                    <p className="text-[#9db9b0] text-sm font-bold tracking-widest uppercase">Upload Proof of Work</p>
+                                    <p className="text-[#4a5e57] text-xs">Drag and drop mission evidence here</p>
+                                </section>
+                                <button className="w-full bg-primary hover:bg-primary/90 text-background-dark font-black text-xl py-6 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-3 group" onClick={() => navigate('/')}>
+                                    <span className="material-symbols-outlined font-black group-hover:translate-x-1 transition-transform">send</span>
+                                    <span>EXECUTE LOG SUBMISSION</span>
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                    
+                    {/* Fixed Notification */}
+                    <div className="fixed bottom-8 right-8 z-[100]">
+                        <div className="bg-surface/90 border border-primary/50 backdrop-blur-xl rounded-2xl p-4 shadow-[0_0_40px_rgba(16,183,127,0.15)] flex items-center gap-6 min-w-[240px]">
+                            <div className="flex-1">
+                                <div className="flex justify-between items-end mb-1">
+                                    <span className="text-[10px] font-black text-primary tracking-widest uppercase">Mission Reward</span>
+                                    <span className="text-primary font-mono font-bold">+1,240 XP</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-primary/20 rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary w-3/4"></div>
+                                </div>
+                                <p className="text-[9px] text-[#4a5e57] mt-1 font-mono">LEVEL 42 | 8,420 / 10,000</p>
+                            </div>
+                            <div className="size-12 rounded-full border-2 border-primary flex items-center justify-center text-primary font-black bg-primary/10">42</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Screen 3: Leaderboard ---
+        const LeaderboardScreen = () => {
+            return (
+                <div className="bg-background-dark font-display text-white h-screen flex flex-col overflow-hidden selection:bg-primary selection:text-white">
+                    <MainHeader activePage="leaderboard" />
+                    <div className="flex-1 overflow-hidden relative mt-16">
+                        <main className="h-full overflow-y-auto p-8 bg-background-dark">
+                            <div className="max-w-[1200px] mx-auto">
+                                <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
+                                    <div className="flex flex-col gap-2">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="text-[#5c7269] text-[10px] font-bold uppercase tracking-widest">System</span>
+                                            <span className="text-[#5c7269] text-[10px] font-bold">/</span>
+                                            <span className="text-primary text-[10px] font-bold uppercase tracking-widest">Leaderboard</span>
+                                        </div>
+                                        <h2 className="text-4xl font-black tracking-tighter text-white uppercase italic">The Arena</h2>
+                                        <p className="text-[#9db9b0] text-sm font-medium tracking-wide flex items-center gap-2">
+                                            <span className="size-2 bg-green-500 rounded-full animate-pulse"></span>
+                                            Global Operator Rankings | Performance Metric Tracking Active
+                                        </p>
+                                    </div>
+                                    <Link to="/log" className="bg-primary hover:bg-[#0da372] text-[#10221c] px-6 py-3 rounded-lg font-black text-sm uppercase flex items-center gap-2 tracking-widest transition-all shadow-[0_0_20px_rgba(16,183,127,0.3)] hover:shadow-[0_0_30px_rgba(16,183,127,0.5)]">
+                                        <span className="material-symbols-outlined text-lg">add_task</span>
+                                        Log Performance
+                                    </Link>
+                                </div>
+
+                                <div className="mb-6 border-b border-[#283933]">
+                                    <div className="flex gap-8">
+                                        <a className="relative py-4 text-xs font-black uppercase tracking-widest text-white group cursor-pointer" href="#">
+                                            This Week
+                                            <span className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"></span>
+                                        </a>
+                                        <a className="relative py-4 text-xs font-black uppercase tracking-widest text-[#5c7269] hover:text-white transition-colors cursor-pointer group" href="#">
+                                            This Month
+                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                                        </a>
+                                        <a className="relative py-4 text-xs font-black uppercase tracking-widest text-[#5c7269] hover:text-white transition-colors cursor-pointer group" href="#">
+                                            All Time
+                                            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <div className="bg-[#15201d] border border-[#283933] rounded-xl overflow-hidden shadow-2xl relative">
+                                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{backgroundImage: 'linear-gradient(#283933 1px, transparent 1px), linear-gradient(90deg, #283933 1px, transparent 1px)', backgroundSize: '20px 20px'}}></div>
+                                    <table className="w-full text-left border-collapse relative z-10">
+                                        <thead>
+                                            <tr className="bg-[#1c2723] border-b border-[#283933]">
+                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#5c7269] w-24">Rank</th>
+                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#5c7269]">Operator</th>
+                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#5c7269]">Domain</th>
+                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#5c7269]">XP (Terminal)</th>
+                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#5c7269]">Streak</th>
+                                                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] text-[#5c7269] text-right">Last Cash</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-[#283933]">
+                                            <tr className="hover:bg-[#1c2723]/50 transition-colors group">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-2"><span className="material-symbols-outlined text-yellow-500 text-lg filled">military_tech</span><span className="font-bold text-lg text-white">01</span></div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-[#283933] overflow-hidden ring-1 ring-[#283933]"><img alt="Operator Alpha" className="w-full h-full object-cover opacity-90" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMl41WI32LR_VyVFXrr5KO0NFuvq_J5xqjo5a00EoFozkY1puMeWgXuHAWuxmTqmO2j9C9sqeUgCOCWzrrW6jhw4p8g8zj9n1iGtFYscnxIUzWFJLM3wTfnpPA1YzTPhD5m4sCODQZgyZvCpRCc1wq2EQ3QH8n9b-bKlec1xJlgjZqrleV28YWhztIQC3SfGeExA6t1PNf56iazTpVaNW4qX3VRCAFXK8fn7z-W10zNNpIdpEKJjwIjhenj_xKHHixnybT2UhvKA"/></div>
+                                                        <span className="font-bold text-white tracking-tight text-sm">@alpha_operator</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4"><span className="bg-[#283933] text-[#9db9b0] text-[10px] font-black px-2 py-1 rounded border border-[#3e524b] uppercase tracking-tighter">SaaS / Enterprise</span></td>
+                                                <td className="px-6 py-4 xp-font text-primary font-bold text-sm">124,500.00</td>
+                                                <td className="px-6 py-4"><div className="flex items-center gap-1.5 text-orange-500"><span className="material-symbols-outlined text-sm filled">bolt</span><span className="text-xs font-black uppercase tracking-tighter">12 Days</span></div></td>
+                                                <td className="px-6 py-4 text-right xp-font text-[#9db9b0] text-sm">$15,000.00</td>
+                                            </tr>
+                                            <tr className="hover:bg-[#1c2723]/50 transition-colors">
+                                                <td className="px-6 py-4"><div className="flex items-center gap-2"><span className="material-symbols-outlined text-slate-300 text-lg filled">military_tech</span><span className="font-bold text-lg text-white">02</span></div></td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg bg-[#283933] overflow-hidden"><img alt="Growth Hacker" className="w-full h-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAr5FQcwhTnmfP3-njjjbofLngWxSf17KYK047NVW3wrYSgfGAmEjOYOA_fGd5-aGWbHMcUvjKfreFt9blrv_vKFKGDNFpaEFAH47KHmCh4tCywnd159K8GvI9fy5FBHDcX10QECENdVJtI3C_WqXUjnP6EZJS1J8odqs2-_4WgStQgBHEENWi6NI-4Lcn5zNeyr2NPOgCPNX4HV94X3T1dR5mDXaPJhrKmd6qa3A3SZCny_3QiFfX4K-nn6YL8gyPfj0U12t79_A"/></div>
+                                                        <span className="font-bold text-white tracking-tight text-sm">@growth_hacker</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4"><span className="bg-[#283933] text-[#9db9b0] text-[10px] font-black px-2 py-1 rounded border border-[#3e524b] uppercase tracking-tighter">Marketing</span></td>
+                                                <td className="px-6 py-4 xp-font text-white font-bold text-sm">118,200.00</td>
+                                                <td className="px-6 py-4"><div className="flex items-center gap-1.5 text-orange-500"><span className="material-symbols-outlined text-sm filled">bolt</span><span className="text-xs font-black uppercase tracking-tighter">8 Days</span></div></td>
+                                                <td className="px-6 py-4 text-right xp-font text-[#9db9b0] text-sm">$8,400.00</td>
+                                            </tr>
+                                            {/* Highlight Current User */}
+                                            <tr className="highlight-row">
+                                                <td className="px-6 py-4"><div className="flex items-center gap-2"><span className="material-symbols-outlined text-[#283933] text-lg">radio_button_checked</span><span className="font-bold text-lg text-primary">04</span></div></td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-lg border border-primary/50 overflow-hidden ring-2 ring-primary/20 shadow-[0_0_15px_rgba(16,183,127,0.3)]"><img alt="Your Operator" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA4RXGVe7Bj1ARjz_C2n_z-qVcTG9DHKNW6fBl0rO7nwAaZ2nS--jPEKnYbeEb2Q7FjsBpjqVclv1mylMCLHHXTlBAG3e2ZKNvPxcsZ1LMKlpcK70oY4XAzUiRtb7rDP4-1W3tnfYSavyOu05AjGUq6Dk5jIXS0Es3ixIouf1PFxoPX3KMK7tq5RifHsoYFDeSZWj2YNsR1tV1uijPG8kFgCLF99S_gW99qAPyqcvvVCC-B6eL5nDJg-GUFONCm53hN-jNbARvrjA"/></div>
+                                                        <div className="flex flex-col"><span className="font-bold text-white tracking-tight text-sm">@current_user</span><span className="text-[9px] text-primary uppercase font-black tracking-widest flex items-center gap-1"><span className="size-1 bg-primary rounded-full animate-pulse"></span> Active Now</span></div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4"><span className="bg-primary/10 text-primary border border-primary/30 text-[10px] font-black px-2 py-1 rounded uppercase tracking-tighter">SaaS / Fintech</span></td>
+                                                <td className="px-6 py-4 xp-font text-primary font-bold text-sm">98,450.00</td>
+                                                <td className="px-6 py-4"><div className="flex items-center gap-1.5 text-orange-500"><span className="material-symbols-outlined text-sm filled">bolt</span><span className="text-xs font-black uppercase tracking-tighter">5 Days</span></div></td>
+                                                <td className="px-6 py-4 text-right xp-font text-white text-sm">$5,000.00</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </main>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Screen 4: Settings ---
+        const SettingsScreen = () => {
+            const navigate = useNavigate();
+            return (
+                <div className="bg-background-light dark:bg-[#111816] text-slate-900 dark:text-white font-display antialiased selection:bg-primary selection:text-white h-screen flex flex-col overflow-hidden">
+                    <MainHeader activePage="settings" />
+                    
+                    <main className="flex-1 flex flex-col h-full overflow-hidden relative mt-16">
+                        <header className="w-full border-b border-border-dark bg-[#111816]/95 backdrop-blur-sm z-10 shrink-0">
+                            <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 text-primary/60 text-xs font-mono tracking-widest mb-1">
+                                        <span className="material-symbols-outlined text-sm">terminal</span>
+                                        <span>SYSTEM // SETTINGS</span>
+                                    </div>
+                                    <h2 className="text-white text-3xl font-black leading-tight tracking-[-0.02em] uppercase">Operator Profile</h2>
+                                    <p className="text-slate-400 text-sm font-normal">Configure your visual ID and operational parameters.</p>
+                                </div>
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 border border-primary/20">
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                                    </span>
+                                    <span className="text-primary text-xs font-bold tracking-widest uppercase">System Online</span>
+                                </div>
+                            </div>
+                        </header>
+                        <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
+                            <div className="max-w-5xl mx-auto flex flex-col gap-8 pb-24">
+                                <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-6 rounded-xl border border-border-dark bg-surface-dark/50">
+                                    <div className="lg:col-span-4 flex flex-col gap-2">
+                                        <h3 className="text-white text-lg font-bold uppercase tracking-wide">Identity</h3>
+                                        <p className="text-slate-500 text-sm">Visual identification and callsign assignment for squad recognition.</p>
+                                    </div>
+                                    <div className="lg:col-span-8 flex flex-col gap-6">
+                                        <div className="flex items-center gap-6 p-4 rounded-lg border border-dashed border-border-dark bg-[#111816]">
+                                            <div className="relative group cursor-pointer">
+                                                <div className="w-20 h-20 rounded-full bg-cover bg-center border-2 border-slate-600 group-hover:border-primary transition-colors" data-alt="Current operator profile picture" style={{backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBHsW6OmN2Y2hcYi5vwe_R9ScBSmSFq_3VfAJb3yGNZ93Mur4vhYX0uak1NpdrUnaynUat5l9nRZDpydS58i2-KZtnYn6ogpz_ewf5dSY9XSjMEBcHSt_LanN3_WoKk376gpTobu7i0QBaxFrN-jdox3ADd2pdmMeEC7AC66XP5-YEieBiO69MduFbcsQsygloIJGdRs2924HjgUUi5iJPR4S8pOi1J_ilqAngSaQGCqmPbOyfoknkk7IQFYQ3P5jqE3DHMZ-YZ8Q')"}}>
+                                                </div>
+                                                <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <span className="material-symbols-outlined text-white">upload</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <span className="text-white font-medium">Visual ID</span>
+                                                <span className="text-slate-500 text-xs mt-1 mb-2">JPG, PNG or GIF. Max 2MB.</span>
+                                                <button className="text-xs text-primary font-bold uppercase tracking-wider hover:underline text-left">Upload New Image</button>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <label className="flex flex-col gap-2">
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Callsign</span>
+                                                <div className="relative">
+                                                    <input className="w-full bg-[#111816] border border-border-dark rounded focus:ring-1 focus:ring-primary focus:border-primary text-white px-4 py-3 placeholder:text-slate-600 font-mono" type="text" defaultValue="MAVERICK"/>
+                                                    <span className="material-symbols-outlined absolute right-3 top-3.5 text-slate-600 text-lg">badge</span>
+                                                </div>
+                                            </label>
+                                            <label className="flex flex-col gap-2">
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Specialization</span>
+                                                <div className="relative">
+                                                    <select className="w-full bg-[#111816] border border-border-dark rounded focus:ring-1 focus:ring-primary focus:border-primary text-white px-4 py-3 appearance-none font-mono">
+                                                        <option>Performance Optimization</option>
+                                                        <option>Tactical Operations</option>
+                                                        <option>Strategic Planning</option>
+                                                        <option>Logistics & Supply</option>
+                                                    </select>
+                                                    <span className="material-symbols-outlined absolute right-3 top-3.5 text-slate-600 text-lg pointer-events-none">expand_more</span>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </section>
+                                {/* More sections would go here as per the original HTML, keeping it concise for the prototype */}
+                            </div>
+                        </div>
+                        <div className="absolute bottom-0 left-0 right-0 border-t border-border-dark bg-[#111816]/95 backdrop-blur z-20 p-4">
+                            <div className="max-w-5xl mx-auto flex items-center justify-end gap-4">
+                                <button className="px-6 py-2.5 rounded text-sm font-bold text-slate-400 hover:text-white uppercase tracking-wider transition-colors" onClick={() => navigate('/')}>
+                                    Discard Changes
+                                </button>
+                                <button className="px-6 py-2.5 rounded bg-primary hover:bg-primary/90 text-[#111816] text-sm font-bold uppercase tracking-wider transition-colors shadow-[0_0_20px_rgba(16,183,127,0.3)] flex items-center gap-2" onClick={() => navigate('/')}>
+                                    <span className="material-symbols-outlined text-lg">save</span>
+                                    Save Configuration
+                                </button>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+
+        const App = () => {
+            return (
+                <MemoryRouter>
+                    <Routes>
+                        <Route path="/" element={<DashboardScreen />} />
+                        <Route path="/log" element={<LogDayScreen />} />
+                        <Route path="/leaderboard" element={<LeaderboardScreen />} />
+                        <Route path="/settings" element={<SettingsScreen />} />
+                    </Routes>
+                </MemoryRouter>
+            );
+        };
+
+        const root = createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

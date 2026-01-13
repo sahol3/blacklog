@@ -1,0 +1,13 @@
+app/(dashboard)/dashboard/page.tsx(70,52): error TS7006: Parameter 'log' implicitly has an 'any' type.
+app/(dashboard)/dashboard/page.tsx(79,56): error TS7006: Parameter 'log' implicitly has an 'any' type.
+app/(dashboard)/dashboard/page.tsx(97,47): error TS7006: Parameter 'l' implicitly has an 'any' type.
+app/(dashboard)/dashboard/page.tsx(109,54): error TS7006: Parameter 'l' implicitly has an 'any' type.
+app/(dashboard)/dashboard/page.tsx(147,76): error TS2552: Cannot find name 'format'. Did you mean 'FormData'?
+app/(dashboard)/leaderboard/page.tsx(31,36): error TS7006: Parameter 'player' implicitly has an 'any' type.
+app/(dashboard)/leaderboard/page.tsx(31,44): error TS7006: Parameter 'index' implicitly has an 'any' type.
+app/(dashboard)/reviews/page.tsx(6,27): error TS2307: Cannot find module 'react-markdown' or its corresponding type declarations.
+app/api/auth/callback/route.ts(1,10): error TS2305: Module '"@supabase/auth-helpers-nextjs"' has no exported member 'createRouteHandlerClient'.
+app/api/cron/weekly-review/route.ts(1,10): error TS2305: Module '"@supabase/auth-helpers-nextjs"' has no exported member 'createRouteHandlerClient'.
+lib/supabase/client.ts(1,10): error TS2305: Module '"@supabase/auth-helpers-nextjs"' has no exported member 'createClientComponentClient'.
+lib/supabase/middleware.ts(1,10): error TS2305: Module '"@supabase/auth-helpers-nextjs"' has no exported member 'createMiddlewareClient'.
+lib/supabase/server.ts(1,10): error TS2724: '"@supabase/auth-helpers-nextjs"' has no exported member named 'createServerComponentClient'. Did you mean 'createServerClient'?

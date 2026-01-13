@@ -1,0 +1,39 @@
+app/(dashboard)/dashboard/page.tsx(62,42): error TS2339: Property 'current_streak' does not exist on type 'never'.
+app/(dashboard)/dashboard/page.tsx(63,43): error TS2339: Property 'total_xp' does not exist on type 'never'.
+app/(dashboard)/dashboard/page.tsx(64,40): error TS2339: Property 'total_xp' does not exist on type 'never'.
+app/(dashboard)/dashboard/page.tsx(64,81): error TS2339: Property 'total_xp' does not exist on type 'never'.
+app/(dashboard)/dashboard/page.tsx(147,76): error TS2552: Cannot find name 'format'. Did you mean 'FormData'?
+components/auth/OnboardingFlow.tsx(88,18): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "users", never, "POST">', gave the following error.
+    Argument of type '{ id: string; email: string; username: string; full_name: string; avatar_url: any; domain: any; goals_json: { main_quest: string; financial_target: string; the_enemy: string; }; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "users", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'id' does not exist in type 'never[]'.
+components/social/RespectButton.tsx(42,58): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "respect_reactions", never, "POST">', gave the following error.
+    Argument of type '{ log_id: string; user_id: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<{ PostgrestVersion: "12"; }, never, never, null, "respect_reactions", never, "POST">', gave the following error.
+    Object literal may only specify known properties, and 'log_id' does not exist in type 'never[]'.
+lib/hooks/useDailyLog.ts(64,31): error TS2339: Property 'id' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(66,47): error TS2339: Property 'body_unhealthy_flag' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(67,39): error TS2339: Property 'body_energy' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(68,42): error TS2339: Property 'mind_read_flag' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(69,38): error TS2339: Property 'mind_focus' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(70,39): error TS2339: Property 'money_value' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(71,42): error TS2339: Property 'money_currency' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(72,39): error TS2339: Property 'money_speed' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(73,47): error TS2339: Property 'skill_practice_flag' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(74,44): error TS2339: Property 'skill_difficulty' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(75,35): error TS2339: Property 'war_log' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(76,37): error TS2339: Property 'image_url' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(77,37): error TS2339: Property 'is_public' does not exist on type 'never'.
+lib/hooks/useDailyLog.ts(135,25): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; } | undefined): PostgrestFilterBuilder<{ ...; }, ... 5 more ..., "POST">', gave the following error.
+    Argument of type '{ body_energy: number; mind_focus: number; money_speed: number; skill_difficulty: number; body_unhealthy_flag: boolean; mind_read_flag: boolean; money_value: number; money_currency: "BDT" | "USD"; ... 5 more ...; date: string; }' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { onConflict?: string | undefined; ignoreDuplicates?: boolean | undefined; count?: "exact" | "planned" | "estimated" | undefined; defaultToNull?: boolean | undefined; } | undefined): PostgrestFilterBuilder<...>', gave the following error.
+    Argument of type '{ body_energy: number; mind_focus: number; money_speed: number; skill_difficulty: number; body_unhealthy_flag: boolean; mind_read_flag: boolean; money_value: number; money_currency: "BDT" | "USD"; ... 5 more ...; date: string; }' is not assignable to parameter of type 'never[]'.
+      Type '{ body_energy: number; mind_focus: number; money_speed: number; skill_difficulty: number; body_unhealthy_flag: boolean; mind_read_flag: boolean; money_value: number; money_currency: "BDT" | "USD"; ... 5 more ...; date: string; }' is missing the following properties from type 'never[]': length, pop, push, concat, and 35 more.
+lib/supabase/server.ts(1,10): error TS2395: Individual declarations in merged declaration 'createServerClient' must be all exported or all local.
+lib/supabase/server.ts(1,10): error TS2440: Import declaration conflicts with local declaration of 'createServerClient'.
+lib/supabase/server.ts(5,14): error TS7023: 'createServerClientInstance' implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.
+lib/supabase/server.ts(8,31): error TS2558: Expected 0 type arguments, but got 1.
+lib/supabase/server.ts(41,14): error TS2395: Individual declarations in merged declaration 'createServerClient' must be all exported or all local.

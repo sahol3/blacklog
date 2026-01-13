@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary selection:text-white;
+  }
+}
+
+@layer utilities {
+  .mono-text {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .grid-cell {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a100e; 
+}
+::-webkit-scrollbar-thumb {
+  background: #283933; 
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #344b43; 
+}
+
+.custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #1f1f1f; border-radius: 10px; }
+
+/* Grid Pattern */
+.bg-grid-pattern {
+  background-image: radial-gradient(#1f1f1f 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Material Symbols */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+.material-symbols-outlined.filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Range Slider Styles */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  background: #283933;
+  height: 0.25rem;
+  border-radius: 0.5rem;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -6px;
+  background-color: #fff;
+  height: 1rem;
+  width: 1rem;
+  border-radius: 50%;
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+.body-slider::-webkit-slider-thumb { background-color: #ef4444 !important; }
+.mind-slider::-webkit-slider-thumb { background-color: #3b82f6 !important; }
+.fin-slider::-webkit-slider-thumb { background-color: #10b77f !important; }
+.skill-slider::-webkit-slider-thumb { background-color: #a855f7 !important; }
+
+/* Leaderboard Specifics */
+.xp-font { font-family: 'JetBrains Mono', monospace; }
+.highlight-row {
+  outline: 1px solid #10b77f;
+  background: rgba(16, 183, 127, 0.05);
+}
+
+/* Toggle Checkbox */
+.toggle-checkbox:checked {
+  right: 0;
+  border-color: #10b77f;
+}
+.toggle-checkbox:checked + .toggle-label {
+  background-color: #10b77f;
+}
