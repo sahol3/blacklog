@@ -9,10 +9,10 @@ export default async function ProfilePage({ params }: { params: { username: stri
     const supabase = createServerClient()
     const { username } = params
 
-    // Fetch user profile
+    // Fetch user profile from public view (doesn't expose sensitive data)
     const { data: profile } = await supabase
-        .from('users')
-        .select('*')
+        .from('public_profiles')
+        .select('id, username, avatar_url, domain, total_xp, current_streak')
         .eq('username', username)
         .single()
 

@@ -7,7 +7,7 @@ export default async function LeaderboardPage() {
     const supabase = createServerClient()
 
     const { data: players } = await supabase
-        .from('users')
+        .from('public_profiles')
         .select('id, username, avatar_url, total_xp, current_streak, domain')
         .order('total_xp', { ascending: false })
         .limit(50)
