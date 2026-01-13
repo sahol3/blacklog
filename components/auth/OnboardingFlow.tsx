@@ -44,13 +44,16 @@ export default function OnboardingFlow() {
                 return
             }
 
+            const { data: { user } } = await supabase.auth.getUser()
+
             const { data } = await supabase
                 .from('users')
-                .select('username')
+                .select('username, id')
                 .eq('username', formData.username)
                 .single()
 
-            setUsernameAvailable(!data)
+            // Available if no user has it, or if current user already owns it
+            setUsernameAvailable(!data || data.id === user?.id)
         }
 
         const timeoutId = setTimeout(checkUsername, 500)
@@ -85,7 +88,7 @@ export default function OnboardingFlow() {
 
             const { error } = await supabase
                 .from('users')
-                .insert({
+                .upsert({
                     id: user.id,
                     email: user.email!,
                     username: formData.username,
@@ -97,7 +100,7 @@ export default function OnboardingFlow() {
                         financial_target: `${formData.money_currency} ${formData.financial_target}`,
                         the_enemy: formData.the_enemy
                     }
-                })
+                }, { onConflict: 'id' })
 
             if (error) throw error
 
@@ -149,8 +152,8 @@ export default function OnboardingFlow() {
                                     value={formData.username}
                                     onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
                                     className={`w-full bg-surface border ${usernameAvailable === true ? 'border-primary/50 focus:border-primary' :
-                                            usernameAvailable === false ? 'border-red-500/50 focus:border-red-500' :
-                                                'border-border-dark focus:border-slate-500'
+                                        usernameAvailable === false ? 'border-red-500/50 focus:border-red-500' :
+                                            'border-border-dark focus:border-slate-500'
                                         } rounded-lg py-3 pl-8 pr-4 text-white font-mono placeholder:text-slate-700 focus:outline-none transition-all`}
                                     placeholder="operator_01"
                                 />
@@ -172,8 +175,8 @@ export default function OnboardingFlow() {
                                         key={d}
                                         onClick={() => setFormData({ ...formData, domain: d as any })}
                                         className={`px-2 py-3 rounded-lg text-xs font-bold uppercase tracking-wide border transition-all ${formData.domain === d
-                                                ? 'bg-primary/10 border-primary text-primary'
-                                                : 'bg-surface border-border-dark text-slate-500 hover:border-slate-600'
+                                            ? 'bg-primary/10 border-primary text-primary'
+                                            : 'bg-surface border-border-dark text-slate-500 hover:border-slate-600'
                                             }`}
                                     >
                                         {d}
