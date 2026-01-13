@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 const links = [
     { name: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
@@ -13,10 +14,32 @@ const links = [
     { name: 'Reviews', href: '/reviews', icon: 'rate_review' },
 ]
 
+type UserProfile = {
+    username: string
+    avatar_url: string | null
+    domain: string | null
+}
+
 export default function Sidebar() {
     const pathname = usePathname()
     const router = useRouter()
     const supabase = createClient()
+    const [user, setUser] = useState<UserProfile | null>(null)
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user: authUser } } = await supabase.auth.getUser()
+            if (authUser) {
+                const { data } = await supabase
+                    .from('users')
+                    .select('username, avatar_url, domain')
+                    .eq('id', authUser.id)
+                    .single()
+                if (data) setUser(data)
+            }
+        }
+        fetchUser()
+    }, [])
 
     const handleSignOut = async () => {
         await supabase.auth.signOut()
@@ -54,7 +77,28 @@ export default function Sidebar() {
                 })}
             </nav>
 
+            {/* User Profile Section */}
             <div className="p-4 border-t border-border-dark">
+                {user && (
+                    <Link
+                        href={`/profile/${user.username}`}
+                        className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-all group mb-2"
+                    >
+                        <div className="size-10 rounded-full bg-slate-800 overflow-hidden border-2 border-primary/30 group-hover:border-primary transition-colors">
+                            {user.avatar_url ? (
+                                <img src={user.avatar_url} alt={user.username} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold text-xs">
+                                    {user.username?.slice(0, 2).toUpperCase()}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-white font-bold text-sm truncate">@{user.username}</p>
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest">{user.domain || 'Operator'}</p>
+                        </div>
+                    </Link>
+                )}
                 <button
                     onClick={handleSignOut}
                     className="flex items-center gap-3 px-4 py-3 w-full rounded-lg text-sm font-bold uppercase tracking-wider text-slate-500 hover:text-red-500 hover:bg-red-500/10 transition-all group"

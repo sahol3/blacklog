@@ -29,13 +29,14 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            // Check user profile existence
+            // Check if user completed onboarding (has domain set)
             const { data: userProfile } = await supabase
                 .from('users')
-                .select('username')
+                .select('domain')
                 .single() // RLS ensures we check own user
 
-            if (!userProfile) {
+            if (!userProfile?.domain) {
+                // User exists but hasn't completed onboarding
                 return NextResponse.redirect(`${origin}/onboarding`)
             }
             return NextResponse.redirect(`${origin}/dashboard`)
