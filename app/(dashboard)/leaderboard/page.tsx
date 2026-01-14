@@ -3,14 +3,23 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+type Player = {
+    id: string
+    username: string
+    avatar_url: string | null
+    total_xp: number
+    current_streak: number
+    domain: string | null
+}
+
 export default async function LeaderboardPage() {
     const supabase = createServerClient()
 
     const { data: players } = await supabase
-        .from('public_profiles')
+        .from('public_profiles' as any)
         .select('id, username, avatar_url, total_xp, current_streak, domain')
         .order('total_xp', { ascending: false })
-        .limit(50)
+        .limit(50) as { data: Player[] | null }
 
     return (
         <div className="w-full pt-8 pb-12 px-6 lg:px-8 max-w-5xl mx-auto">

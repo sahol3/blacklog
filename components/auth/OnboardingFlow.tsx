@@ -50,7 +50,7 @@ export default function OnboardingFlow() {
                 .from('users')
                 .select('username, id')
                 .eq('username', formData.username)
-                .single()
+                .single() as { data: { username: string; id: string } | null }
 
             // Available if no user has it, or if current user already owns it
             setUsernameAvailable(!data || data.id === user?.id)
@@ -94,13 +94,13 @@ export default function OnboardingFlow() {
                     username: formData.username,
                     full_name: formData.full_name,
                     avatar_url: user.user_metadata.avatar_url,
-                    domain: formData.domain as any,
+                    domain: formData.domain,
                     goals_json: {
                         main_quest: formData.main_quest,
                         financial_target: `${formData.money_currency} ${formData.financial_target}`,
                         the_enemy: formData.the_enemy
                     }
-                }, { onConflict: 'id' })
+                } as any, { onConflict: 'id' })
 
             if (error) throw error
 

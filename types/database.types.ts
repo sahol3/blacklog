@@ -113,5 +113,18 @@ export interface Database {
                 }
             }
         }
+        Views: {
+            public_profiles: {
+                Row: {
+                    id: string
+                    username: string
+                    avatar_url: string | null
+                    domain: 'Dev' | 'Designer' | 'Agency' | 'Student' | 'Other' | null
+                    current_streak: number
+                    total_xp: number
+                    created_at: string
+                }
+            }
+        }
     }
 }

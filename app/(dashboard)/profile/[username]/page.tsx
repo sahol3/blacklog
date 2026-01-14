@@ -5,16 +5,25 @@ import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
+type PublicProfile = {
+    id: string
+    username: string
+    avatar_url: string | null
+    domain: string | null
+    total_xp: number
+    current_streak: number
+}
+
 export default async function ProfilePage({ params }: { params: { username: string } }) {
     const supabase = createServerClient()
     const { username } = params
 
     // Fetch user profile from public view (doesn't expose sensitive data)
     const { data: profile } = await supabase
-        .from('public_profiles')
+        .from('public_profiles' as any)
         .select('id, username, avatar_url, domain, total_xp, current_streak')
         .eq('username', username)
-        .single()
+        .single() as { data: PublicProfile | null }
 
     if (!profile) {
         return (
