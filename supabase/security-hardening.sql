@@ -1,28 +1,26 @@
 -- ============================================
--- CRITICAL SECURITY FIX
--- Run this IMMEDIATELY in Supabase SQL Editor
+-- COMPLETE SECURITY FIX - Run in Supabase SQL Editor
+-- This properly secures your data while allowing public features
 -- ============================================
 
 -- ============================================
--- 1. FIX USERS TABLE - Only allow viewing own profile
---    For leaderboard/grid, use a limited view
+-- 1. FIX USERS TABLE
 -- ============================================
 
 DROP POLICY IF EXISTS "Users can view all profiles" ON users;
 DROP POLICY IF EXISTS "Authenticated users can view profiles" ON users;
+DROP POLICY IF EXISTS "Users can view own profile" ON users;
 
--- Users can only view their own full profile
+-- Only allow viewing own full profile
 CREATE POLICY "Users can view own profile" ON users
-  FOR SELECT 
-  TO authenticated
+  FOR SELECT TO authenticated
   USING (auth.uid() = id);
 
 -- ============================================
--- 2. CREATE A PUBLIC PROFILES VIEW (Read-Only)
---    This exposes ONLY safe columns for leaderboard/grid
+-- 2. CREATE PUBLIC PROFILES VIEW
 -- ============================================
 
-DROP VIEW IF EXISTS public_profiles;
+DROP VIEW IF EXISTS public_profiles CASCADE;
 
 CREATE VIEW public_profiles AS
 SELECT 
@@ -35,43 +33,62 @@ SELECT
   created_at
 FROM users;
 
--- Grant access to the view
 GRANT SELECT ON public_profiles TO authenticated;
 
 -- ============================================
--- 3. FIX DAILY_LOGS - Ensure private logs stay private
+-- 3. FIX DAILY_LOGS - Allow public OR own
 -- ============================================
 
--- Current policy allows public logs OR own logs - this is correct
--- But verify it's working:
 DROP POLICY IF EXISTS "Users can view public logs or own logs" ON daily_logs;
+DROP POLICY IF EXISTS "View public logs or own logs" ON daily_logs;
+DROP POLICY IF EXISTS "Users can view own logs only" ON daily_logs;
 
-CREATE POLICY "View public logs or own logs" ON daily_logs
-  FOR SELECT 
-  TO authenticated
+-- Restore: Users can see PUBLIC logs OR their OWN logs
+CREATE POLICY "View public or own logs" ON daily_logs
+  FOR SELECT TO authenticated
   USING (is_public = TRUE OR auth.uid() = user_id);
 
 -- ============================================
--- 4. FIX WEEKLY_REVIEWS - Only owner can view
+-- 4. CREATE SAFE PUBLIC LOGS VIEW (hides sensitive fields)
+-- Use this view for Grid feed instead of direct table access
 -- ============================================
 
-DROP POLICY IF EXISTS "Users can view own reviews" ON weekly_reviews;
+DROP VIEW IF EXISTS public_logs CASCADE;
 
-CREATE POLICY "Users can view own reviews" ON weekly_reviews
-  FOR SELECT 
-  TO authenticated
-  USING (auth.uid() = user_id);
+CREATE VIEW public_logs AS
+SELECT 
+  dl.id,
+  dl.user_id,
+  dl.date,
+  dl.is_public,
+  dl.body_energy,
+  dl.mind_focus,
+  dl.skill_difficulty,
+  dl.war_log,
+  dl.image_url,
+  dl.created_at,
+  -- Exclude: money_value, money_currency, money_speed, body_unhealthy_flag
+  -- Include user info
+  u.username,
+  u.avatar_url,
+  u.domain
+FROM daily_logs dl
+JOIN users u ON dl.user_id = u.id
+WHERE dl.is_public = TRUE;
+
+GRANT SELECT ON public_logs TO authenticated;
 
 -- ============================================
--- 5. FIX RESPECT_REACTIONS
+-- 5. FIX RESPECT REACTIONS
 -- ============================================
 
 DROP POLICY IF EXISTS "Anyone can view respect counts" ON respect_reactions;
 DROP POLICY IF EXISTS "Authenticated users can view respect" ON respect_reactions;
+DROP POLICY IF EXISTS "View respect on public logs" ON respect_reactions;
 
-CREATE POLICY "View respect on public logs" ON respect_reactions
-  FOR SELECT 
-  TO authenticated
+-- Allow viewing respect on logs user can access
+CREATE POLICY "View respect reactions" ON respect_reactions
+  FOR SELECT TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM daily_logs 
@@ -81,7 +98,7 @@ CREATE POLICY "View respect on public logs" ON respect_reactions
   );
 
 -- ============================================
--- VERIFY RLS IS ENABLED ON ALL TABLES
+-- VERIFY: Check that RLS is enabled
 -- ============================================
 
 SELECT tablename, rowsecurity 
@@ -89,4 +106,4 @@ FROM pg_tables
 WHERE schemaname = 'public' 
 AND tablename IN ('users', 'daily_logs', 'weekly_reviews', 'respect_reactions');
 
--- All should show 't' (true) for rowsecurity
+-- All should show 't' (true)
