@@ -29,11 +29,19 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            // Check if user completed onboarding (has domain set)
+            // Get the authenticated user
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!user) {
+                return NextResponse.redirect(`${origin}/login?error=auth`)
+            }
+
+            // Check if user completed onboarding - use explicit user ID
             const { data: userProfile } = await supabase
                 .from('users')
                 .select('domain')
-                .single() // RLS ensures we check own user
+                .eq('id', user.id)
+                .single()
 
             if (!userProfile?.domain) {
                 // User exists but hasn't completed onboarding
